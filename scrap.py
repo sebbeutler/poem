@@ -12,7 +12,7 @@ index_page = getSoup("https://www.poesie-francaise.fr/poemes-auteurs/")
 author_links = index_page.select('.menu-centrale a')
 author_count = author_total = len(author_links)
 
-db: dict[str,list[str]] = {}
+db = {}
 
 for i, author_link in enumerate(author_links):
     author_url = str(author_link.get('href')).replace('.fr/poemes-', '.fr/')
@@ -36,12 +36,28 @@ for i, author_link in enumerate(author_links):
             try:
                 poem_page = getSoup(poem_url)
                 poem = poem_page.select('#content > article > .w3-content > p')
+                title = poem_page.select('#content > article > .w3-content > h2')
+                book = poem_page.select('#content > article > .w3-content > .w3-margin-bottom > a')
                 if len(poem) == 0:
                     continue
                 else:
                     poem = poem[0]
 
-                db[author].append(poem.get_text(separator='\n'))
+                if len(title) == 0:
+                    title = 'Sans Titre'
+                else:
+                    title = title[0].getText()
+
+                if len(book) == 0:
+                    book = '.'
+                else:
+                    book = book[0].getText()
+
+                db[author].append({
+                    'titre': title,
+                    'recueil': book,
+                    'content': poem.get_text(separator='\n'),
+                })
                 print(f'({i-(author_total-author_count)+1:4d}:{author_count:4d}){author}: [{j-(poem_total-poem_count)+1:4d}/{poem_count:4d}]', end='\r')
             except:
                 print(f'Error {poem_url}')
